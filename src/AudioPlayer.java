@@ -17,6 +17,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+
 import java.io.File;
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class AudioPlayer extends Application {
     private Media media;
     private List<File> fileList;
     private int songIndex = 0;
+    private Label songNamelabel;
     /* start method
      - is the entry point for the JavaFX application
      - is called automatically after the application is launched */
@@ -36,8 +38,8 @@ public class AudioPlayer extends Application {
         Button nextButton = new Button("Next");
         Button previousButton = new Button("Prev");
         Button addButton = new Button("Add");
-        Slider volumeSlider = new Slider(0, 1, 0.5); // Min=0, Max=1, Initial=0.5
-        Label songNamelabel = new Label("Now Playing: My Favorite Song");
+        Slider volumeSlider = new Slider(0, 1, 0.25); // Min=0, Max=1, Initial=0.5
+        songNamelabel = new Label("Upload a song to be played");
         songNamelabel.getStyleClass().add("label-bg"); // Apply the CSS class to the label
 
         // Add event handler for buttons
@@ -47,11 +49,11 @@ public class AudioPlayer extends Application {
             fileList = fileChooser.showOpenMultipleDialog(primaryStage);
             if (fileList != null) {
                 media = new Media(fileList.getFirst().toURI().toString());
+                songNamelabel.setText(fileList.get(songIndex).getName());
                 if(player != null){
                     player.stop();
                 }
                 player = new MediaPlayer(media);
-                player.setOnReady(()-> System.out.println("Player is ready"));
             }
         });
 
@@ -66,6 +68,7 @@ public class AudioPlayer extends Application {
                 }
             }
         });
+
         nextButton.setOnAction(e -> {
             if(player != null){
                 player.stop();
@@ -76,6 +79,7 @@ public class AudioPlayer extends Application {
                     songIndex = 0;
                 }
                 media = new Media(fileList.get(songIndex).toURI().toString());
+                songNamelabel.setText(fileList.get(songIndex).getName());
                 player = new MediaPlayer(media);
                 player.play();
             }
@@ -91,12 +95,13 @@ public class AudioPlayer extends Application {
                     songIndex = fileList.size()-1;
                 }
                 media = new Media(fileList.get(songIndex).toURI().toString());
+                songNamelabel.setText(fileList.get(songIndex).getName());
                 player = new MediaPlayer(media);
                 player.play();
             }
         });
-//        addButton.setOnAction(e -> songNamelabel.setText("Song name"));
-        volumeSlider.setOnMouseClicked(e -> System.out.println("Volume changed"));
+
+        volumeSlider.setOnMouseClicked(e -> player.setVolume(volumeSlider.getValue()));
 
         // Align elements in a HBox: 70 is the spacing between the elements
         HBox hboxTop = new HBox(30);
