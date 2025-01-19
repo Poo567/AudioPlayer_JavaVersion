@@ -1,0 +1,4 @@
+.label-bg {
+    -fx-background-color: lightblue;
+    -fx-padding: 10px; /* Optional: Adds padding around the label */
+}
