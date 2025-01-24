@@ -1,4 +1,7 @@
 .label-bg {
-    -fx-background-color: lightblue;
-    -fx-padding: 10px; /* Optional: Adds padding around the label */
+    -fx-background-color: rgba(0, 0, 0, 0.6); /* Black with 54% opacity */
+    -fx-text-fill: white; /* Text color remains fully opaque and white */
+    -fx-padding: 10px; /* Optional padding for spacing */
+    -fx-text-fill: white;
 }
+.root { -fx-background-color: #25503d;  }

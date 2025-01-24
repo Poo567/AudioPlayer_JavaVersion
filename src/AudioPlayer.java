@@ -3,7 +3,6 @@
     b: Padding from the right (b pixels)
     c: Padding from the bottom (c pixels)
     d: Padding from the left (d pixels) */
-//        vboxTop.setPadding(new Insets(50, 0, 0, 0));
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -12,6 +11,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -27,6 +31,11 @@ public class AudioPlayer extends Application {
     private List<File> fileList;
     private int songIndex = 0;
     private Label songNamelabel;
+    private Image themeImage;
+    private Image gifImage;
+    private ImageView imageView;
+    private  Slider volumeSlider;
+
     /* start method
      - is the entry point for the JavaFX application
      - is called automatically after the application is launched */
@@ -34,13 +43,45 @@ public class AudioPlayer extends Application {
     public void start(Stage primaryStage) {
 
         // Create objects
-        Button playButton = new Button("Play");
-        Button nextButton = new Button("Next");
-        Button previousButton = new Button("Prev");
-        Button addButton = new Button("Add");
-        Slider volumeSlider = new Slider(0, 1, 0.25); // Min=0, Max=1, Initial=0.5
+        Button playButton = new Button();
+        ImageView playButtonImage = new ImageView(new Image("file:/E:/java_workspace/JavaPractice/AudioPlayer_JavaVersion/resources/pics/Start_Button.png"));
+        playButtonImage.setFitWidth(20); // Set image width
+        playButtonImage.setFitHeight(20); // Set image height
+        playButton.setGraphic(playButtonImage);
+
+        Button nextButton = new Button();
+        ImageView nextImageButton = new ImageView(new Image("file:/E:/java_workspace/JavaPractice/AudioPlayer_JavaVersion/resources/pics/Next_Button.png"));
+        nextImageButton.setFitWidth(15); // Set image width
+        nextImageButton.setFitHeight(15); // Set image height
+        nextButton.setGraphic(nextImageButton);
+
+        Button previousButton = new Button();
+        ImageView previousImageButton = new ImageView(new Image("file:/E:/java_workspace/JavaPractice/AudioPlayer_JavaVersion/resources/pics/Previous_Button.png"));
+        previousImageButton.setFitWidth(15); // Set image width
+        previousImageButton.setFitHeight(15); // Set image height
+        previousButton.setGraphic(previousImageButton);
+
+        Button addButton = new Button();
+        ImageView addImageButton = new ImageView(new Image("file:/E:/java_workspace/JavaPractice/AudioPlayer_JavaVersion/resources/pics/Add_Button.png"));
+        addImageButton.setFitWidth(20); // Set image width
+        addImageButton.setFitHeight(20); // Set image height
+        addButton.setGraphic(addImageButton);
+
+        volumeSlider = new Slider(0, 1, 0.25); // Min=0, Max=1, Initial=0.5
         songNamelabel = new Label("Upload a song to be played");
         songNamelabel.getStyleClass().add("label-bg"); // Apply the CSS class to the label
+
+        themeImage = new Image("file:/E:/java_workspace/JavaPractice/AudioPlayer_JavaVersion/resources/pics/tiger.png");
+        gifImage = new Image("file:/E:/java_workspace/JavaPractice/AudioPlayer_JavaVersion/resources/pics/SoundWave.gif");
+
+        // Create an ImageView to display the GIF
+        imageView = new ImageView(themeImage);
+
+        // Optional: Set the size of the ImageView
+        imageView.setFitWidth(250);
+        imageView.setFitHeight(250);
+        imageView.setPreserveRatio(true);
+        imageView.setSmooth(true);
 
         // Add event handler for buttons
         addButton.setOnAction(e -> {
@@ -53,7 +94,7 @@ public class AudioPlayer extends Application {
                 if(player != null){
                     player.stop();
                 }
-                player = new MediaPlayer(media);
+                setUpPlayer(media);
             }
         });
 
@@ -62,9 +103,11 @@ public class AudioPlayer extends Application {
                 if(player.getStatus() == MediaPlayer.Status.PLAYING){
                     System.out.println("pause");
                     player.pause();
+                    imageView.setImage(themeImage);
                 } else {
                     System.out.println("Player is playing");
                     player.play();
+                    imageView.setImage(gifImage);
                 }
             }
         });
@@ -80,8 +123,7 @@ public class AudioPlayer extends Application {
                 }
                 media = new Media(fileList.get(songIndex).toURI().toString());
                 songNamelabel.setText(fileList.get(songIndex).getName());
-                player = new MediaPlayer(media);
-                player.play();
+                setUpPlayer(media);
             }
         });
 
@@ -96,30 +138,65 @@ public class AudioPlayer extends Application {
                 }
                 media = new Media(fileList.get(songIndex).toURI().toString());
                 songNamelabel.setText(fileList.get(songIndex).getName());
-                player = new MediaPlayer(media);
-                player.play();
+                setUpPlayer(media);
             }
         });
 
-        volumeSlider.setOnMouseClicked(e -> player.setVolume(volumeSlider.getValue()));
+        volumeSlider.setOnMouseClicked(e -> {
+            if (player != null) {
+                player.setVolume(volumeSlider.getValue());
+            }
+        });
 
         // Align elements in a HBox: 70 is the spacing between the elements
         HBox hboxTop = new HBox(30);
         hboxTop.getChildren().addAll(previousButton, playButton, nextButton);
         hboxTop.setAlignment(Pos.CENTER);
-        hboxTop.setPadding(new Insets(75, 0, 0, 0));
+        hboxTop.setPadding(new Insets(30, 0, 0, 0));
+
+        HBox hBoxMiddle = new HBox();
+        hBoxMiddle.getChildren().addAll(imageView);
+        hBoxMiddle.setAlignment(Pos.CENTER);
+        hBoxMiddle.setMinSize(250, 300);
+        hBoxMiddle.setPadding(new Insets(20, 0, 0, 0));
 
         // Align elements in a HBox: 70 is the spacing between the elements
         HBox hboxBottom = new HBox(100);
         hboxBottom.getChildren().addAll(addButton, volumeSlider);
         hboxBottom.setAlignment(Pos.CENTER);
-        hboxBottom.setPadding(new Insets(300, 0, 0, 0));
+        hboxBottom.setPadding(new Insets(30, 0, 0, 0));
 
-        VBox vbox = new VBox(songNamelabel, hboxTop, hboxBottom);
+        VBox vbox = new VBox(songNamelabel, hboxTop,hBoxMiddle, hboxBottom);
         vbox.setAlignment(Pos.CENTER);
+        vbox.getStyleClass().add("root");
+        vbox.setOnDragOver((DragEvent event) -> {
+            if (event.getGestureSource() != vbox && event.getDragboard().hasFiles()) {
+                event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+            }
+            event.consume();
+        });
+
+        vbox.setOnDragDropped((DragEvent event) -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            if (db.hasFiles()) {
+                success = true;
+                fileList = db.getFiles();  // Get files from dragboard
+                if (!fileList.isEmpty()) {
+                    media = new Media(fileList.getFirst().toURI().toString());
+                    songNamelabel.setText(fileList.getFirst().getName());
+                    if (player != null) {
+                        player.stop();
+                    }
+                    player = new MediaPlayer(media);
+                }
+            }
+            event.setDropCompleted(success);
+            event.consume();
+        });
 
         // Create a scene with the box
-        Scene scene = new Scene(vbox, 450, 700);
+        Scene scene = new Scene(vbox, 370, 550);
         scene.getStylesheets().add("style.css");
 
         // Set up the stage
@@ -131,5 +208,26 @@ public class AudioPlayer extends Application {
 
     public static void main(String[] args){
         launch(args);
+
+    }
+
+    private void progressToNextSong() {
+        if(songIndex < fileList.size() - 1){
+            songIndex++;
+        } else {
+            songIndex = 0;
+        }
+        media = new Media(fileList.get(songIndex).toURI().toString());
+        songNamelabel.setText(fileList.get(songIndex).getName());
+        setUpPlayer(media);
+    }
+
+    private void setUpPlayer(Media media) {
+        player = new MediaPlayer(media);
+        player.setVolume(volumeSlider.getValue());
+        player.setOnEndOfMedia(this::progressToNextSong);
+        player.play();
+        imageView.setImage(gifImage);
     }
 }
+
