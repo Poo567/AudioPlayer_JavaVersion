@@ -11,6 +11,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
@@ -43,36 +44,16 @@ public class AudioPlayer extends Application {
     public void start(Stage primaryStage) {
 
         // Create objects
-        Button playButton = new Button();
-        ImageView playButtonImage = new ImageView(new Image("file:/E:/java_workspace/JavaPractice/AudioPlayer_JavaVersion/resources/pics/Start_Button.png"));
-        playButtonImage.setFitWidth(20); // Set image width
-        playButtonImage.setFitHeight(20); // Set image height
-        playButton.setGraphic(playButtonImage);
-
-        Button nextButton = new Button();
-        ImageView nextImageButton = new ImageView(new Image("file:/E:/java_workspace/JavaPractice/AudioPlayer_JavaVersion/resources/pics/Next_Button.png"));
-        nextImageButton.setFitWidth(15); // Set image width
-        nextImageButton.setFitHeight(15); // Set image height
-        nextButton.setGraphic(nextImageButton);
-
-        Button previousButton = new Button();
-        ImageView previousImageButton = new ImageView(new Image("file:/E:/java_workspace/JavaPractice/AudioPlayer_JavaVersion/resources/pics/Previous_Button.png"));
-        previousImageButton.setFitWidth(15); // Set image width
-        previousImageButton.setFitHeight(15); // Set image height
-        previousButton.setGraphic(previousImageButton);
-
-        Button addButton = new Button();
-        ImageView addImageButton = new ImageView(new Image("file:/E:/java_workspace/JavaPractice/AudioPlayer_JavaVersion/resources/pics/Add_Button.png"));
-        addImageButton.setFitWidth(20); // Set image width
-        addImageButton.setFitHeight(20); // Set image height
-        addButton.setGraphic(addImageButton);
-
+        Button playButton = createButton("file:./../resources/pics/Start_Button.png", 20, 20, "Play");
+        Button nextButton = createButton("file:./../resources/pics/Next_Button.png", 15, 15, "Next");
+        Button previousButton = createButton("file:./../resources/pics/Previous_Button.png", 15, 15, "Previous");
+        Button addButton = createButton("file:./../resources/pics/Add_Button.png", 20, 20, "Upload");
         volumeSlider = new Slider(0, 1, 0.25); // Min=0, Max=1, Initial=0.5
         songNamelabel = new Label("Upload a song to be played");
         songNamelabel.getStyleClass().add("label-bg"); // Apply the CSS class to the label
 
-        themeImage = new Image("file:/E:/java_workspace/JavaPractice/AudioPlayer_JavaVersion/resources/pics/tiger.png");
-        gifImage = new Image("file:/E:/java_workspace/JavaPractice/AudioPlayer_JavaVersion/resources/pics/SoundWave.gif");
+        themeImage = new Image("file:./../resources/pics/tiger.png");
+        gifImage = new Image("file:./../resources/pics/SoundWave.gif");
 
         // Create an ImageView to display the GIF
         imageView = new ImageView(themeImage);
@@ -84,69 +65,12 @@ public class AudioPlayer extends Application {
         imageView.setSmooth(true);
 
         // Add event handler for buttons
-        addButton.setOnAction(e -> {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().add( new FileChooser.ExtensionFilter("Audio Files", "*.wav", "*.mp3", "*.aac") );
-            fileList = fileChooser.showOpenMultipleDialog(primaryStage);
-            if (fileList != null) {
-                media = new Media(fileList.getFirst().toURI().toString());
-                songNamelabel.setText(fileList.get(songIndex).getName());
-                if(player != null){
-                    player.stop();
-                }
-                setUpPlayer(media);
-            }
-        });
+        addButton.setOnAction(e -> selectSongsToBePlayed(primaryStage));
+        playButton.setOnAction(e -> playSong());
+        nextButton.setOnAction(e -> progressToNextSong());
+        previousButton.setOnAction(e ->progressToPreviousSong());
 
-        playButton.setOnAction(e -> {
-            if (player != null) {
-                if(player.getStatus() == MediaPlayer.Status.PLAYING){
-                    System.out.println("pause");
-                    player.pause();
-                    imageView.setImage(themeImage);
-                } else {
-                    System.out.println("Player is playing");
-                    player.play();
-                    imageView.setImage(gifImage);
-                }
-            }
-        });
-
-        nextButton.setOnAction(e -> {
-            if(player != null){
-                player.stop();
-
-                if(songIndex <= fileList.size()-2){
-                     songIndex++;
-                } else {
-                    songIndex = 0;
-                }
-                media = new Media(fileList.get(songIndex).toURI().toString());
-                songNamelabel.setText(fileList.get(songIndex).getName());
-                setUpPlayer(media);
-            }
-        });
-
-        previousButton.setOnAction(e -> {
-            if(player != null){
-                player.stop();
-
-                if(songIndex >= 1){
-                    songIndex--;
-                } else {
-                    songIndex = fileList.size()-1;
-                }
-                media = new Media(fileList.get(songIndex).toURI().toString());
-                songNamelabel.setText(fileList.get(songIndex).getName());
-                setUpPlayer(media);
-            }
-        });
-
-        volumeSlider.setOnMouseClicked(e -> {
-            if (player != null) {
-                player.setVolume(volumeSlider.getValue());
-            }
-        });
+        volumeSlider.setOnMouseClicked(e -> changePlayerVolume());
 
         // Align elements in a HBox: 70 is the spacing between the elements
         HBox hboxTop = new HBox(30);
@@ -175,25 +99,7 @@ public class AudioPlayer extends Application {
             }
             event.consume();
         });
-
-        vbox.setOnDragDropped((DragEvent event) -> {
-            Dragboard db = event.getDragboard();
-            boolean success = false;
-            if (db.hasFiles()) {
-                success = true;
-                fileList = db.getFiles();  // Get files from dragboard
-                if (!fileList.isEmpty()) {
-                    media = new Media(fileList.getFirst().toURI().toString());
-                    songNamelabel.setText(fileList.getFirst().getName());
-                    if (player != null) {
-                        player.stop();
-                    }
-                    player = new MediaPlayer(media);
-                }
-            }
-            event.setDropCompleted(success);
-            event.consume();
-        });
+        vbox.setOnDragDropped(this::dragInSongsToBePlayed);
 
         // Create a scene with the box
         Scene scene = new Scene(vbox, 370, 550);
@@ -208,26 +114,99 @@ public class AudioPlayer extends Application {
 
     public static void main(String[] args){
         launch(args);
+    }
 
+    private void selectSongsToBePlayed(Stage stage){
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add( new FileChooser.ExtensionFilter("Audio Files", "*.wav", "*.mp3", "*.aac") );
+        fileList = fileChooser.showOpenMultipleDialog(stage);
+        if (fileList != null) {
+            File song = fileList.getFirst();
+            setUpMediaPlayer(song);
+        }
+    }
+
+    private void dragInSongsToBePlayed(DragEvent event){
+        Dragboard db = event.getDragboard();
+        if (db.hasFiles()) {
+            fileList = db.getFiles();  // Get files from dragboard
+            if (!fileList.isEmpty()) {
+                File song = fileList.getFirst();
+                setUpMediaPlayer(song);
+            }
+        }
+        event.setDropCompleted(true);
+        event.consume();
+    }
+    
+    private void playSong(){
+        if (player != null) {
+            if(player.getStatus() == MediaPlayer.Status.PLAYING){
+                System.out.println("pause");
+                player.pause();
+                imageView.setImage(themeImage);
+            } else {
+                System.out.println("Player is playing");
+                player.play();
+                imageView.setImage(gifImage);
+            }
+        }
     }
 
     private void progressToNextSong() {
+        if (fileList == null || fileList.isEmpty()) {
+            System.out.println("No songs in the playlist.");
+            return; // Exit the method if fileList is null or empty
+        }
         if(songIndex < fileList.size() - 1){
             songIndex++;
         } else {
             songIndex = 0;
         }
-        media = new Media(fileList.get(songIndex).toURI().toString());
-        songNamelabel.setText(fileList.get(songIndex).getName());
-        setUpPlayer(media);
+        File song = fileList.get(songIndex);
+        setUpMediaPlayer(song);
     }
 
-    private void setUpPlayer(Media media) {
-        player = new MediaPlayer(media);
-        player.setVolume(volumeSlider.getValue());
+    private void progressToPreviousSong(){
+        if (fileList == null || fileList.isEmpty()) {
+            System.out.println("No songs in the playlist.");
+            return; // Exit the method if fileList is null or empty
+        }
+        if(songIndex >= 1){
+            songIndex--;
+        } else {
+            songIndex = fileList.size()-1;
+        }
+        File song = fileList.get(songIndex);
+        setUpMediaPlayer(song);
+    }
+
+    private void changePlayerVolume(){
+        if (player != null) {
+            player.setVolume(volumeSlider.getValue());
+        }
+    }
+
+    private void setUpMediaPlayer(File song) {
+        if(player != null) {
+            player.stop();
+        }
+        player = new MediaPlayer(new Media(song.toURI().toString()));
+        changePlayerVolume();
         player.setOnEndOfMedia(this::progressToNextSong);
         player.play();
         imageView.setImage(gifImage);
+        songNamelabel.setText(song.getName());
+    }
+
+    private Button createButton(String imagePath, int imageWidth, int imageHeight, String text){
+        Button button = new Button();
+        ImageView buttonImage = new ImageView((new Image(imagePath)));
+        buttonImage.setFitHeight(imageHeight);
+        buttonImage.setFitWidth(imageWidth);
+        button.setGraphic(buttonImage);
+        button.setTooltip(new Tooltip(text));
+        return button;
     }
 }
 
